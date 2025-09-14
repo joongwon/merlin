@@ -584,9 +584,11 @@ rule token state = parse
   | ".<"
       { return METAOCAML_BRACKET_OPEN }
   | ">."
-      { return (keyword_or state (Lexing.lexeme lexbuf) (INFIXOP0 ">.")) }
+      (* { return (keyword_or state (Lexing.lexeme lexbuf) (INFIXOP0 ">.")) } *)
+      { return METAOCAML_BRACKET_CLOSE }
   | ".~"
-      { return (keyword_or state (Lexing.lexeme lexbuf) METAOCAML_ESCAPE) }
+      (* { return (keyword_or state (Lexing.lexeme lexbuf) METAOCAML_ESCAPE) } *)
+      { return METAOCAML_ESCAPE }
   | "_"
       { return UNDERSCORE }
   | "~"
