@@ -4698,14 +4698,6 @@ and type_expect_
           Trx.texp_escape exp env (instance ty_expected)
       in begin
       match sexp.pexp_attributes with
-      | [] ->                           (* pure bracket, with no attr *)
-        let ty = newgenvar() in     (* expected type for the sexp' within bra *)
-        with_explanation (fun () ->
-          unify_exp_types loc env (Trx.mk_type_code ty) ty_expected);
-        let exp =
-          with_stage_up (fun () -> type_expect env sexp' (mk_expected ty)) in
-        record exp (is_nonexpansive exp)
-
           (* the programmer asserts that the bracketed expression is
            a functional literal. Check it, and if so, give it a more
            refined type: pat_code
@@ -4714,7 +4706,7 @@ and type_expect_
         begin match sexp'.pexp_desc with
         | Pexp_function _ -> ()
         | _               -> 
-          raise @@ Error_forward(Location.errorf ~loc 
+          raise_error @@ Error_forward(Location.errorf ~loc 
           "The expression does not appear to be a functional literal as \
           requested")
         end;
@@ -4735,7 +4727,7 @@ and type_expect_
          *)
       | [{attr_name= {txt="metaocaml.value"}}] ->
         let () = if not (Trx.is_value_exp 0 sexp') then 
-            raise @@ Error_forward(Location.errorf ~loc 
+            raise_error @@ Error_forward(Location.errorf ~loc 
             "The expression does not appear to be syntactically a value as \
             requested") in
         let ty = newgenvar() in     (* expected type for the bracketed sexp *)
@@ -4745,9 +4737,19 @@ and type_expect_
            with_stage_up (fun () -> type_expect env sexp' (mk_expected ty)) in
         (* Value is certainly non-expansive *)
         record exp true
-     | _ ->
+      | (*[]*) _ ->                           (* pure bracket, with no attr *)
+        let ty = newgenvar() in     (* expected type for the sexp' within bra *)
+        with_explanation (fun () ->
+          unify_exp_types loc env (Trx.mk_type_code ty) ty_expected);
+        let exp =
+          with_stage_up (fun () -> type_expect env sexp' (mk_expected ty)) in
+        record exp (is_nonexpansive exp)
+
+      (*| attrs ->
             raise @@ Error_forward(Location.errorf ~loc 
-            "Invalid/unexpected attribute on a bracket")
+            "Invalid/unexpected attribute on a bracket: %s" (
+              String.concat ", " 
+              (List.map (fun a -> a.attr_name.txt) attrs))) *)
   end
 (* NNN end *)
 
